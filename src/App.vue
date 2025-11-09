@@ -72,38 +72,32 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { previewRange, defaultTeamOffsets } from './planning.js'
+import { ref } from "vue";
 
-const team = ref(4)
-const fromIso = ref('2025-11-01')
-const len = ref(30)
+// ✅ tableau complet des 25 jours
+const cycle = [
+  "Matin", "Après-midi", "Après-midi", "Nuit", "Nuit", "Repos", "Repos", "Repos",
+  "Matin", "Matin", "Après-midi", "Nuit", "Nuit", "Repos", "Repos", "Repos",
+  "Matin", "Matin", "Après-midi", "Après-midi", "Nuit", "Repos", "Repos", "Repos", "Repos"
+];
 
-// copie des offsets modifiables
-const teamOffsets = reactive({
-  1: defaultTeamOffsets[1],
-  2: defaultTeamOffsets[2],
-  3: defaultTeamOffsets[3],
-  4: defaultTeamOffsets[4],
-  5: defaultTeamOffsets[5]
-})
+const startDate = ref(new Date("2024-10-31")); // <-- date du début du cycle équipe 4
+const selectedDate = ref(new Date()); // today
+const currentShift = ref("");
 
-const rows = ref([])
+function getShift(date, teamStartDate) {
+  const diffTime = date - teamStartDate;
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-function refresh() {
-  rows.value = previewRange(team.value, fromIso.value, len.value, teamOffsets)
+  // ✅ Correction du décalage d’un jour
+  const index = ((diffDays % cycle.length) + cycle.length) % cycle.length;
+
+  return cycle[index];
 }
 
-function copyAsText() {
-  const text = rows.value.map(r => `${r.iso}\t${r.daysSinceStart}\t${r.offset}\t${r.index}\t${r.shift}`).join('\n')
-  navigator.clipboard?.writeText(text).then(() => {
-    alert('Rapport copié dans le presse-papier — colle-le ici si ça déconne.')
-  }, () => {
-    alert('Impossible de copier (ancien navigateur). Fais un screenshot ou copie manuelle.')
-  })
-}
+// Exécuter au chargement
+currentShift.value = getShift(selectedDate.value, startDate.value);
 
-refresh()
 </script>
 
 <style>
