@@ -9,10 +9,12 @@ export const baseCycle = [
   "Matin","Matin","A-Midi","A-Midi","Nuit","-","-","-","-"
 ];
 
-export const cycleLength = baseCycle.length;
+export const cycleLength = baseCycle.length
 
-// Ancre : l'équipe 4 démarre le JOUR 0 du cycle le 2025-10-31 (UTC)
-export const startUTC = Date.UTC(2025, 9, 31); // mois 9 = octobre
+// ✅ Ancre du cycle (Équipe 4) : 31 octobre 2025, à minuit UTC
+// ⚠️ IMPORTANT : le mois est 9 car JS commence à 0 pour janvier
+export const startUTC = Date.UTC(2025, 9, 31, 0, 0, 0); // <-- Ajout des heures/minutes/secondes
+
 const DAY = 24 * 60 * 60 * 1000;
 
 // Par défaut : espacement 5 jours entre les équipes (modifiable)
