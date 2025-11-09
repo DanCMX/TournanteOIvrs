@@ -24,7 +24,7 @@
 
     <!-- Résultat rapide -->
     <div style="margin:8px 0;font-size:18px">
-      Résultat pour <strong>Équipe {{ team }}</strong> le <strong>{{ dateIso }}</strong> : 
+      Résultat pour <strong>Équipe {{ team }}</strong> le <strong>{{ dateIso }}</strong> :
       <span style="margin-left:8px;font-weight:700">{{ resultText }}</span>
     </div>
 
@@ -144,10 +144,19 @@ function showNext() {
 // applique setAnchorFromObserved et affiche le résultat
 async function applyAnchor() {
   try {
-    // on appelle la fonction importée
     const res = setAnchorFromObserved(anchorTeam.value, anchorDate.value, anchorShift.value)
-    // res contient l'ancre recalculée
     anchorInfo.value = { anchorIso: res.anchorIso, days: res.daysSinceAnchorForGivenDate }
-    // après avoir changé l'ancre interne, on recharge la liste pour vérif
     showNext()
-    alert('Ancre
+    alert('Ancre appliquée : ' + res.anchorIso + ' (days=' + res.daysSinceAnchorForGivenDate + ')')
+  } catch (e) {
+    alert('Erreur : ' + (e.message || e))
+  }
+}
+
+// initial
+check()
+</script>
+
+<style>
+/* pas d'imports externes pour rester simple */
+</style>
