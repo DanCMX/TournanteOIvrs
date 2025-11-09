@@ -97,6 +97,8 @@ function showNext() {
   }
 }
 
+setAnchorFromObserved(4, '2025-10-31', 'Repos')
+
 // initial check
 check()
 </script>
