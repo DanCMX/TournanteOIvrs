@@ -65,39 +65,44 @@
     </div>
 
     <div class="mt-4 text-sm text-gray-700">
-      <p><strong>Explication :</strong> la colonne <em>Jour depuis ancre</em> est calculée en UTC (minuit UTC = jour entier). Si tu vois un décalage de 1, vérifie que ta date d'ancre et tes offsets sont corrects.</p>
-      <p class="mt-2">Si le calcul est encore faux : copie le rapport (bouton "Copier rapport") et colle-le ici. Je regarderai la ligne qui ne correspond pas et je corrigerai l'offset ou l'ancre.</p>
+      <p><strong>Explication :</strong> la colonne <em>Jour depuis ancre</em> est calculée en UTC (minuit UTC = jour entier).</p>
+      <p class="mt-2">Si le calcul est encore faux : clique sur "Copier rapport" et colle-le ici — je corrigerai l'ancre ou les offsets.</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, reactive } from 'vue'
+import { previewRange, defaultTeamOffsets } from './planning.js'
 
-// ✅ tableau complet des 25 jours
-const cycle = [
-  "Matin", "Après-midi", "Après-midi", "Nuit", "Nuit", "Repos", "Repos", "Repos",
-  "Matin", "Matin", "Après-midi", "Nuit", "Nuit", "Repos", "Repos", "Repos",
-  "Matin", "Matin", "Après-midi", "Après-midi", "Nuit", "Repos", "Repos", "Repos", "Repos"
-];
+const team = ref(4)
+const fromIso = ref('2025-11-01')
+const len = ref(30)
 
-const startDate = ref(new Date("2024-10-31")); // <-- date du début du cycle équipe 4
-const selectedDate = ref(new Date()); // today
-const currentShift = ref("");
+const teamOffsets = reactive({
+  1: defaultTeamOffsets[1],
+  2: defaultTeamOffsets[2],
+  3: defaultTeamOffsets[3],
+  4: defaultTeamOffsets[4],
+  5: defaultTeamOffsets[5]
+})
 
-function getShift(date, teamStartDate) {
-  const diffTime = date - teamStartDate;
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+const rows = ref([])
 
-  // ✅ Correction du décalage d’un jour
-  const index = ((diffDays % cycle.length) + cycle.length) % cycle.length;
-
-  return cycle[index];
+function refresh() {
+  rows.value = previewRange(team.value, fromIso.value, len.value, teamOffsets)
 }
 
-// Exécuter au chargement
-currentShift.value = getShift(selectedDate.value, startDate.value);
+function copyAsText() {
+  const text = rows.value.map(r => `${r.iso}\t${r.daysSinceStart}\t${r.offset}\t${r.index}\t${r.shift}`).join('\n')
+  navigator.clipboard?.writeText(text).then(() => {
+    alert('Rapport copié — colle-le ici.')
+  }, () => {
+    alert('Impossible de copier. Fais un screenshot ou copie manuelle.')
+  })
+}
 
+refresh()
 </script>
 
 <style>
