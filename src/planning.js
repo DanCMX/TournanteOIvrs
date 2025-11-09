@@ -1,66 +1,40 @@
-// src/planning.js
-// Cycle exact (25 jours)
-export const baseCycle = [
-  // Bloc 1
-  "Matin","A-Midi","A-Midi","Nuit","Nuit","-","-","-",
-  // Bloc 2
-  "Matin","Matin","A-Midi","Nuit","Nuit","-","-","-",
-  // Bloc 3
-  "Matin","Matin","A-Midi","A-Midi","Nuit","-","-","-","-"
-];
+// ------------------------------
+// planning.js
+// ------------------------------
 
-export const cycleLength = baseCycle.length
-
-// ✅ Ancre du cycle (Équipe 4) : 31 octobre 2025, à minuit UTC
-// ⚠️ IMPORTANT : le mois est 9 car JS commence à 0 pour janvier
-export const startUTC = Date.UTC(2025, 9, 31, 0, 0, 0); // <-- Ajout des heures/minutes/secondes
+// ✅ Ancre du cycle (Équipe 4) : 31 octobre 2025 à minuit UTC
+export const startUTC = Date.UTC(2025, 9, 31, 0, 0, 0); // mois 9 = octobre (index 0 = Janvier)
 
 const DAY = 24 * 60 * 60 * 1000;
 
-// Par défaut : espacement 5 jours entre les équipes (modifiable)
-export const defaultTeamOffsets = {
-  1: 10,
-  2: 15,
-  3: 20,
-  4: 0,   // équipe 4 = ancre
-  5: 5
-};
+// ✅ Cycle 5x8 que tu m’as donné
+export const cycle = [
+  "Matin", "Après-midi", "Après-midi", "Nuit", "Nuit", "Repos", "Repos", "Repos",
+  "Matin", "Matin", "Après-midi", "Nuit", "Nuit", "Repos", "Repos", "Repos",
+  "Matin", "Matin", "Après-midi", "Après-midi", "Nuit", "Repos", "Repos", "Repos", "Repos"
+];
 
-// transforme une Date JS en "jours depuis l'ancre" en UTC entier
-export function daysSinceStartUTC(date) {
-  const dUTC = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
-  return Math.floor((dUTC - startUTC) / DAY);
-}
+/**
+ * Retourne le poste à effectuer pour une date donnée
+ * @param {Date} dateToCheck
+ * @returns {string}
+ */
+export function getShiftForDate(dateToCheck) {
+  // Convertit la date choisie en UTC
+  const dateOnlyUTC = Date.UTC(
+    dateToCheck.getFullYear(),
+    dateToCheck.getMonth(),
+    dateToCheck.getDate(),
+    0, 0, 0
+  );
 
-// retourne index / shift et valeurs brutes pour debug
-export function computeIndexFor(teamNumber, date, teamOffsets = defaultTeamOffsets) {
-  const days = daysSinceStartUTC(date);
-  const offset = Number(teamOffsets[teamNumber] ?? 0);
-  let idx = (days + offset) % cycleLength;
-  if (idx < 0) idx += cycleLength;
-  const shift = baseCycle[idx];
-  return { daysSinceStart: days, offset, index: idx, shift };
-}
+  const diff = dateOnlyUTC - startUTC;
 
-// helper simple
-export function getShiftForDate(teamNumber, date, teamOffsets = defaultTeamOffsets) {
-  return computeIndexFor(teamNumber, date, teamOffsets).shift;
-}
+  // ✅ Réglage qui supprimera le décalage d'un jour
+  const diffDays = Math.floor(diff / DAY + 0.0001);
 
-// helper pour l'UI : tableau de n jours à partir d'une date
-export function previewRange(teamNumber, fromDateIso, len = 30, teamOffsets = defaultTeamOffsets) {
-  const start = new Date(fromDateIso);
-  return Array.from({ length: len }, (_, i) => {
-    const d = new Date(start);
-    d.setUTCDate(start.getUTCDate() + i);
-    const { daysSinceStart, offset, index, shift } = computeIndexFor(teamNumber, d, teamOffsets);
-    return {
-      iso: d.toISOString().slice(0,10),
-      weekday: d.toLocaleDateString('fr-FR', { weekday: 'short' }),
-      daysSinceStart,
-      offset,
-      index,
-      shift
-    };
-  });
+  // Position dans le cycle (boucle infinie / modulo)
+  const index = ((diffDays % cycle.length) + cycle.length) % cycle.length;
+
+  return cycle[index];
 }
