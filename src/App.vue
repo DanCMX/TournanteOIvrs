@@ -1,8 +1,9 @@
 <template>
-  <div style="padding:20px;max-width:720px;margin:0 auto;font-family:Arial,Helvetica,sans-serif">
-    <h1>Planning tournante 5x8 — Test</h1>
+  <div style="padding:18px;max-width:820px;margin:0 auto;font-family:Arial,Helvetica,sans-serif">
+    <h1 style="margin-bottom:8px">Planning tournante 5x8 — Outils</h1>
 
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0">
+    <!-- Contrôles principaux -->
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
       <div>
         <label>Équipe</label><br>
         <select v-model.number="team">
@@ -21,11 +22,52 @@
       </div>
     </div>
 
-    <div style="margin:10px 0;font-size:18px">
-      Résultat : <strong>{{ resultText }}</strong>
+    <!-- Résultat rapide -->
+    <div style="margin:8px 0;font-size:18px">
+      Résultat pour <strong>Équipe {{ team }}</strong> le <strong>{{ dateIso }}</strong> : 
+      <span style="margin-left:8px;font-weight:700">{{ resultText }}</span>
     </div>
 
-    <div v-if="rows.length" style="margin-top:18px">
+    <!-- Section ancre : définir à partir d'une observation -->
+    <section style="border:1px solid #eee;padding:12px;border-radius:6px;margin-top:14px;background:#fafafa">
+      <h3 style="margin:0 0 8px 0">Ajuster l'ancre à partir d'une observation</h3>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+        <div>
+          <label>Date observée</label><br>
+          <input type="date" v-model="anchorDate" />
+        </div>
+
+        <div>
+          <label>Équipe observée</label><br>
+          <select v-model.number="anchorTeam">
+            <option v-for="i in 5" :key="i" :value="i">Équipe {{ i }}</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Poste observé</label><br>
+          <select v-model="anchorShift">
+            <option value="Matin">Matin</option>
+            <option value="A-Midi">A-Midi</option>
+            <option value="Nuit">Nuit</option>
+            <option value="Repos">Repos</option>
+          </select>
+        </div>
+
+        <div>
+          <button @click="applyAnchor" style="padding:6px 10px">Appliquer l'ancre</button>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;color:#444">
+        <div>Anchor actuelle (ISO) : <strong>{{ anchorInfo.anchorIso || '(par défaut)' }}</strong></div>
+        <div v-if="anchorInfo.days !== undefined">daysSinceAnchor for observed date : <strong>{{ anchorInfo.days }}</strong></div>
+      </div>
+    </section>
+
+    <!-- Table résultat / preview -->
+    <div v-if="rows.length" style="margin-top:16px">
       <table style="width:100%;border-collapse:collapse">
         <thead style="background:#f3f3f3">
           <tr>
@@ -50,15 +92,15 @@
       </table>
     </div>
 
-    <div style="margin-top:14px;color:#666;font-size:13px">
-      Astuce : pour être sûr que la date d'ancre est interprétée correctement, essaie <code>2025-10-31T00:00:00Z</code> dans le champ date.
+    <div style="margin-top:12px;color:#666;font-size:13px">
+      Astuce : si tu connais EXACTEMENT un jour où ton équipe avait "Repos" (ou "Matin"), utilise la section "Ajuster l'ancre" pour que tout s'aligne automatiquement.
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { getShiftForTeamOnDate, previewRange } from './planning.js'
+import { getShiftForTeamOnDate, previewRange, setAnchorFromObserved } from './planning.js'
 
 const team = ref(4)
 const today = new Date()
@@ -69,6 +111,12 @@ const dateIso = ref(`${yyyy}-${mm}-${dd}`)
 
 const resultText = ref('')
 const rows = ref([])
+
+// anchor UI state
+const anchorDate = ref('2025-10-31')
+const anchorTeam = ref(4)
+const anchorShift = ref('Repos')
+const anchorInfo = ref({})
 
 function displayShift(s) {
   return s === '-' ? 'Repos' : s
@@ -83,7 +131,6 @@ function colorFor(s) {
 function check() {
   rows.value = []
   resultText.value = ''
-  // parse date (assure ISO T00:00:00Z)
   const iso = dateIso.value.includes('T') ? dateIso.value : dateIso.value + 'T00:00:00Z'
   const d = new Date(iso)
   resultText.value = displayShift(getShiftForTeamOnDate(team.value, d))
@@ -91,15 +138,16 @@ function check() {
 
 function showNext() {
   rows.value = previewRange(team.value, dateIso.value.includes('T') ? dateIso.value : dateIso.value + 'T00:00:00Z', 10)
-  // set the main result as well (first line)
-  if (rows.value.length) {
-    resultText.value = displayShift(rows.value[0].shift)
-  }
+  if (rows.value.length) resultText.value = displayShift(rows.value[0].shift)
 }
 
-setAnchorFromObserved(4, '2025-10-31', 'Repos')
-
-// initial check
-check()
-  
-</script>
+// applique setAnchorFromObserved et affiche le résultat
+async function applyAnchor() {
+  try {
+    // on appelle la fonction importée
+    const res = setAnchorFromObserved(anchorTeam.value, anchorDate.value, anchorShift.value)
+    // res contient l'ancre recalculée
+    anchorInfo.value = { anchorIso: res.anchorIso, days: res.daysSinceAnchorForGivenDate }
+    // après avoir changé l'ancre interne, on recharge la liste pour vérif
+    showNext()
+    alert('Ancre
