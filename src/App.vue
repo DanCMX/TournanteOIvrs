@@ -1,4 +1,4 @@
-<template>
+de<template>
   <div class="wrap">
     <header class="header">
       <h1>Planning 5×8</h1>
@@ -96,6 +96,34 @@ const dd = today.getDate().toString().padStart(2,'0')
 const dateIso = ref(`${yyyy}-${mm}-${dd}`)
 const len = ref(14)
 const rows = ref([])
+
+  import { getShiftForTeamOnDate } from "./planning.js"
+
+// -------- recherche un jour --------
+const singleTeam = ref(4)
+const singleDate = ref(dateIso.value)
+const singleResult = ref("")
+const singleRaw = ref("")
+
+function refreshSingle() {
+  if (!singleDate.value) return
+  const iso = singleDate.value + "T00:00:00Z"
+  const d = new Date(iso)
+  const shift = getShiftForTeamOnDate(singleTeam.value, d)
+  singleRaw.value = shift
+  singleResult.value = displayShift(shift)
+}
+
+function formatDate(iso) {
+  if (!iso) return ""
+  const d = new Date(iso + "T00:00:00")
+  return d.toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric"
+  })
+}
 
 // thème (clair / sombre)
 const isDark = ref(false)
