@@ -7,6 +7,33 @@
       </button>
     </header>
 
+    <!-- BLOC : RECHERCHER UN JOUR PRÉCIS -->
+<section class="card">
+  <h2>Rechercher un jour précis</h2>
+
+  <div class="controls">
+    <label>Équipe
+      <select v-model.number="singleTeam">
+        <option v-for="i in 5" :key="i" :value="i">Équipe {{ i }}</option>
+      </select>
+    </label>
+
+    <label>Date
+      <input type="date" v-model="singleDate" />
+    </label>
+
+    <button class="btn" @click="refreshSingle">Voir</button>
+  </div>
+
+  <div v-if="singleResult" class="day-result">
+    Le <strong>{{ formatDate(singleDate) }}</strong>,
+    l’équipe <strong>{{ singleTeam }}</strong> est :
+    <span :class="badgeClass(singleRaw)">{{ singleResult }}</span>
+  </div>
+
+  <div v-else class="hint">Choisis une date et clique sur <em>Voir</em>.</div>
+</section>
+    
     <section class="card">
       <h2>Afficher une période</h2>
 
